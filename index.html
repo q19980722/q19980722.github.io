@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>LOD Example</title>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.119.1/build/three.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.117.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.117.0/examples/js/loaders/OBJLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.117.0/examples/js/exporters/OBJExporter.js"></script>
+  <script src="reconstruction.js"></script>
+  <script src="poly2tri.js"></script>
+  <script src="DRACOLoader.js"></script>
+  <script src="stats.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="Stats-output">
+  </div>
+  <script>
+
+    // 初始化场景、相机和渲染器
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 20;
+    var renderer = new THREE.WebGLRenderer();
+    renderer.shadowMap.enabled = true;
+    var controls = new THREE.OrbitControls(camera, document.body);
+    const loader = new THREE.OBJLoader();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap = true;
+    renderer.setClearColor(0xffffff,1.0);
+    // renderer.setClearColor('#0000bb', 0.6);
+    renderer.setPixelRatio(window.devicePixelRatio)
+    document.body.appendChild(renderer.domElement);
+
+    var stats = new Stats();
+    stats.showPanel( 0 );
+    document.body.appendChild( stats.dom );
+
+    var worker = new Worker('worker.js');
+
+    reconstruction().then(result => {
+      const structure = result.structure;
+      const obj_array = result.objs.obj;
+      const base_objs = result.objs.base_obj;
+      // const obj = loader.parse(structure);
+
+      // for (let geometry of base_objs){
+      //   // geometry.computeVertexNormals();
+      //   var material = new THREE.MeshBasicMaterial({color: 0xffffff});
+      //   var mesh = new THREE.Mesh( geometry, material );
+      //   mesh.castShadow = true;
+      //   mesh.receiveShadow = true;
+      //   scene.add( mesh );
+      // }
+
+        // var material = new THREE.MeshBasicMaterial({color: 0xffffff});
+
+        console.log(base_objs)
+        var mesh = new THREE.Mesh( base_objs[0], new THREE.MeshPhongMaterial({color: 0xffffff}));
+        const obj_string = new THREE.OBJExporter().parse(mesh);
+        console.log(obj_string);
+
+        worker.postMessage(
+            {"blob": obj_string,
+             "percentage": 0.99,
+            }
+        );
+        // mesh.castShadow = true;
+        // mesh.receiveShadow = true;
+        // scene.add( mesh );
+
+      var ambient = new THREE.AmbientLight(0xffffff, 0.4)
+      scene.add(ambient)
+      const pointLight1 = new THREE.PointLight(0xffffff, intensity=0.4);
+      pointLight1.position.set(0, 0, 20);
+      scene.add(pointLight1);
+      console.log(scene);
+      render();
+    });
+
+
+    worker.onmessage = function(e) {
+      if (e.data.bin_data !== undefined) {
+        const decoder = new TextDecoder('utf-8');
+        const str = decoder.decode(e.data.bin_data);
+        const m = loader.parse(str).children[0];
+        m.material =  new THREE.MeshPhongMaterial({color: 0xffffff});
+        m.geometry.computeVertexNormals();
+        scene.add(m);
+        console.log(scene);
+      }
+    }
+  
+
+  // const dracoLoader = new THREE.DRACOLoader();
+  // dracoLoader.load('file.drc', function (geometry) {
+  //           geometry.computeVertexNormals();
+  //           var material = new THREE.MeshStandardMaterial( { vertexColors: THREE.VertexColors } );
+  //           var mesh = new THREE.Mesh( geometry, material );
+  //           // mesh.castShadow = true;
+  //           // mesh.receiveShadow = true;
+  //           console.log(mesh);
+  //           scene.add( mesh );
+  //         });
+
+    // // 准备两个模型，一个简单，一个复杂
+    // var simpleGeometry = new THREE.BoxGeometry(1, 1, 1);
+    // var simpleMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    // var simpleMesh = new THREE.Mesh(simpleGeometry, simpleMaterial);
+
+    // var complexGeometry = new THREE.SphereGeometry(1, 32, 32);
+    // var complexMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    // var complexMesh = new THREE.Mesh(complexGeometry, complexMaterial);
+
+
+    // // 使用LOD将两个模型组合在一起
+    // var lod = new THREE.LOD();
+    // // lod.addLevel(simpleMesh, 10);
+    // // lod.addLevel(complexMesh, 0);
+    // loader.load('chair3.obj', function (object) {
+    // // loader.load('untitled.obj', function (object) {
+    //   // object.children[0].geometry.computeVertexNormals();
+    //     // lod.addLevel(object, 0);
+    //     // render();
+    //     scene.add(object);
+    //   });
+
+    loader.load('5-1-reconstruction.obj', function (object) {
+        scene.add(object);
+      });
+      loader.load('5-2-reconstruction.obj', function (object) {
+        scene.add(object);
+      });
+      loader.load('5-3-reconstruction.obj', function (object) {
+        scene.add(object);
+      });
+      loader.load('5-4-reconstruction.obj', function (object) {
+        scene.add(object);
+      });
+      loader.load('5-5-reconstruction.obj', function (object) {
+        scene.add(object);
+      });
+      loader.load('6-reconstruction.obj', function (object) {
+        scene.add(object);
+      });
+    // scene.add(lod);
+
+    // const color = 0xffffff
+    //     const intensity = 2
+    //     const light = new THREE.DirectionalLight(color, intensity)
+    //     light.castShadow = true // 投射阴影
+    //     light.position.set(30, 30, 30)
+    //     light.target.position.set(-4, 0, -4)
+    //     scene.add(light)
+    //     scene.add(light.target)
+
+
+    
+    // 渲染循环
+    var render = function() {
+      stats.begin();
+      requestAnimationFrame(render);
+      controls.update();
+// const distance = camera.position.distanceTo(lod.position);
+      // 更新距离，并选择最合适的模型
+      // lod.update(camera);
+
+      renderer.render(scene, camera);
+      stats.end();
+    };
+  </script>
+</body>
+</html>
