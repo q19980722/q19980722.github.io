@@ -64,51 +64,59 @@
 }
 
 
-async function test2() {
-  return new Promise((resolve) => {
-    const startTime = performance.now();
-    loader.load(`reconstruction-16ch.obj`, function(obj) {
-      var ambient = new THREE.AmbientLight(0xffffff, 0.4)
-      scene.add(ambient)
-      const pointLight1 = new THREE.PointLight(0xffffff, intensity=0.4);
-      pointLight1.position.set(0, 0, 20);
-      scene.add(pointLight1);
-      scene.add(obj);
-      const endTime = performance.now();
-      const timeDiff = endTime - startTime;
-      resolve(timeDiff);
-    })
-  });
-}
+// async function test2() {
+//   return new Promise((resolve) => {
+//     const startTime = performance.now();
+//     loader.load(`reconstruction-16ch.obj`, function(obj) {
+//       var ambient = new THREE.AmbientLight(0xffffff, 0.4)
+//       scene.add(ambient)
+//       const pointLight1 = new THREE.PointLight(0xffffff, intensity=0.4);
+//       pointLight1.position.set(0, 0, 20);
+//       scene.add(pointLight1);
+//       scene.add(obj);
+//       const endTime = performance.now();
+//       const timeDiff = endTime - startTime;
+//       resolve(timeDiff);
+//       render();
+//       console.log(scene);
+//     })
+//   });
+// }
 
 
 // test10Times();
 
 
     async function test() {
-      await reconstruction("5-2-16ch.bin").then(result => {
+      await reconstruction("ANS_Result-8bit.bin").then(result => {
         const obj_array = result.objs.obj;
         const base_objs = result.objs.base_obj.map((geometry) => {
           return new THREE.InstancedMesh(geometry, new THREE.MeshPhongMaterial({color: 0xff0000}), obj_array.length);
         });
         const structure = loader.parse(result.structure);
-        const getMatrix = function (o) {
-          const matrix = new THREE.Matrix4();
-          const position = new THREE.Vector3(o.x, o.y + 3, 0);
-          const rotation = new THREE.Euler(0, 0, -o.rotation * Math.PI / 180);
-          const quaternion = new THREE.Quaternion();
-          quaternion.setFromEuler( rotation );
-          const scale = new THREE.Vector3(1,1,1);
-          matrix.compose( position, quaternion, scale );
-          return matrix;
+        for (let i = 0; i < obj_array.length; ++i) {
+          loader.load("chair3.obj", function(geometry) {
+              geometry.children[0].position.set(obj_array[i].x, obj_array[i].y, 0);
+              scene.add(geometry.children[0]);
+          })
         }
-        for ( let i = 0; i < obj_array.length; i++ ) {
-          const matrix = getMatrix(obj_array[i]);
-          base_objs[obj_array[i].index].setMatrixAt( i, matrix );
-        }
-        for (let i = 0; i < base_objs.length; ++i) {
-          scene.add(base_objs[i]);
-        }
+        // const getMatrix = function (o) {
+        //   const matrix = new THREE.Matrix4();
+        //   const position = new THREE.Vector3(o.x, o.y + 3, 0);
+        //   const rotation = new THREE.Euler(0, 0, -o.rotation * Math.PI / 180);
+        //   const quaternion = new THREE.Quaternion();
+        //   quaternion.setFromEuler( rotation );
+        //   const scale = new THREE.Vector3(1,1,1);
+        //   matrix.compose( position, quaternion, scale );
+        //   return matrix;
+        // }
+        // for ( let i = 0; i < obj_array.length; i++ ) {
+        //   const matrix = getMatrix(obj_array[i]);
+        //   base_objs[obj_array[i].index].setMatrixAt( i, matrix );
+        // }
+        // for (let i = 0; i < base_objs.length; ++i) {
+        //   scene.add(base_objs[i]);
+        // }
         scene.add(structure);
         var ambient = new THREE.AmbientLight(0xffffff, 0.4)
         scene.add(ambient)
