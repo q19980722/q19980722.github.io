@@ -45,23 +45,48 @@
     stats.showPanel( 0 );
     document.body.appendChild( stats.dom );
 
+
     var worker = new Worker('worker.js');
 
     test()
-   
 
+    // let isInteracting = false;
 
-    async function test10Times() {
-  const times = [];
-  for (let i = 0; i < 10; i++) {
-    const timeDiff = await test2();
-    times.push(timeDiff);
-    console.log(`Time taken for test ${i}: ${timeDiff}ms`);
-  }
-  const total = times.reduce((acc, curr) => acc + curr);
-  const avgTime = total / times.length;
-  console.log(`Average time: ${avgTime}ms`);
-}
+    // // 监听鼠标移动事件，设置isInteracting为true
+    // renderer.domElement.addEventListener('touchstart', () => {
+    //   requestAnimationFrame(render);
+    // });
+
+    // // 监听鼠标离开事件，设置isInteracting为false
+    // renderer.domElement.addEventListener('mouseleave', () => {
+    //   setTimeout(() => {
+    //       cancelAnimationFrame(render);
+    //     }, 1000);
+    // });
+
+    controls.addEventListener('change', () => {requestAnimationFrame(render)});
+    var render = function() {
+      stats.begin();
+      controls.update();
+// const distance = camera.position.distanceTo(lod.position);
+      // 更新距离，并选择最合适的模型
+      // lod.update(camera);
+
+      renderer.render(scene, camera);
+      stats.end();
+    };
+
+//     async function test10Times() {
+//   const times = [];
+//   for (let i = 0; i < 10; i++) {
+//     const timeDiff = await test2();
+//     times.push(timeDiff);
+//     console.log(`Time taken for test ${i}: ${timeDiff}ms`);
+//   }
+//   const total = times.reduce((acc, curr) => acc + curr);
+//   const avgTime = total / times.length;
+//   console.log(`Average time: ${avgTime}ms`);
+// }
 
 
 // async function test2() {
@@ -88,7 +113,7 @@
 
 
     async function test() {
-      await reconstruction("ANS_Result-8bit.bin").then(result => {
+      await reconstruction("5-2-16ch.bin").then(result => {
         const obj_array = result.objs.obj;
         const base_objs = result.objs.base_obj.map((geometry) => {
           return new THREE.InstancedMesh(geometry, new THREE.MeshPhongMaterial({color: 0xff0000}), obj_array.length);
@@ -100,23 +125,6 @@
               scene.add(geometry.children[0]);
           })
         }
-        // const getMatrix = function (o) {
-        //   const matrix = new THREE.Matrix4();
-        //   const position = new THREE.Vector3(o.x, o.y + 3, 0);
-        //   const rotation = new THREE.Euler(0, 0, -o.rotation * Math.PI / 180);
-        //   const quaternion = new THREE.Quaternion();
-        //   quaternion.setFromEuler( rotation );
-        //   const scale = new THREE.Vector3(1,1,1);
-        //   matrix.compose( position, quaternion, scale );
-        //   return matrix;
-        // }
-        // for ( let i = 0; i < obj_array.length; i++ ) {
-        //   const matrix = getMatrix(obj_array[i]);
-        //   base_objs[obj_array[i].index].setMatrixAt( i, matrix );
-        // }
-        // for (let i = 0; i < base_objs.length; ++i) {
-        //   scene.add(base_objs[i]);
-        // }
         scene.add(structure);
         var ambient = new THREE.AmbientLight(0xffffff, 0.4)
         scene.add(ambient)
@@ -238,17 +246,6 @@
 
     
     // 渲染循环
-    var render = function() {
-      stats.begin();
-      requestAnimationFrame(render);
-      controls.update();
-// const distance = camera.position.distanceTo(lod.position);
-      // 更新距离，并选择最合适的模型
-      // lod.update(camera);
-
-      renderer.render(scene, camera);
-      stats.end();
-    };
   </script>
 </body>
 </html>
