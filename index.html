@@ -39,6 +39,12 @@
     renderer.setPixelRatio(window.devicePixelRatio)
     document.body.appendChild(renderer.domElement);
 
+    var boxhelpers = [];
+    var frustum = new THREE.Frustum();
+    var projScreenMatrix = new THREE.Matrix4();
+    projScreenMatrix.multiplyMatrices( camera.projectionMatrix, camera.matrixWorldInverse );
+    frustum.setFromMatrix( projScreenMatrix );
+
     var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
     var stats = new Stats();
@@ -47,144 +53,6 @@
 
 
     var worker = new Worker('worker.js');
-
-    test()
-
-    // let isInteracting = false;
-
-    // // 监听鼠标移动事件，设置isInteracting为true
-    // renderer.domElement.addEventListener('touchstart', () => {
-    //   requestAnimationFrame(render);
-    // });
-
-    // // 监听鼠标离开事件，设置isInteracting为false
-    // renderer.domElement.addEventListener('mouseleave', () => {
-    //   setTimeout(() => {
-    //       cancelAnimationFrame(render);
-    //     }, 1000);
-    // });
-
-    controls.addEventListener('change', () => {requestAnimationFrame(render)});
-    var render = function() {
-      stats.begin();
-      controls.update();
-// const distance = camera.position.distanceTo(lod.position);
-      // 更新距离，并选择最合适的模型
-      // lod.update(camera);
-
-      renderer.render(scene, camera);
-      stats.end();
-    };
-
-//     async function test10Times() {
-//   const times = [];
-//   for (let i = 0; i < 10; i++) {
-//     const timeDiff = await test2();
-//     times.push(timeDiff);
-//     console.log(`Time taken for test ${i}: ${timeDiff}ms`);
-//   }
-//   const total = times.reduce((acc, curr) => acc + curr);
-//   const avgTime = total / times.length;
-//   console.log(`Average time: ${avgTime}ms`);
-// }
-
-
-// async function test2() {
-//   return new Promise((resolve) => {
-//     const startTime = performance.now();
-//     loader.load(`reconstruction-16ch.obj`, function(obj) {
-//       var ambient = new THREE.AmbientLight(0xffffff, 0.4)
-//       scene.add(ambient)
-//       const pointLight1 = new THREE.PointLight(0xffffff, intensity=0.4);
-//       pointLight1.position.set(0, 0, 20);
-//       scene.add(pointLight1);
-//       scene.add(obj);
-//       const endTime = performance.now();
-//       const timeDiff = endTime - startTime;
-//       resolve(timeDiff);
-//       render();
-//       console.log(scene);
-//     })
-//   });
-// }
-
-
-// test10Times();
-
-
-    async function test() {
-      await reconstruction("5-2-16ch.bin").then(result => {
-        const obj_array = result.objs.obj;
-        const base_objs = result.objs.base_obj.map((geometry) => {
-          return new THREE.InstancedMesh(geometry, new THREE.MeshPhongMaterial({color: 0xff0000}), obj_array.length);
-        });
-        const structure = loader.parse(result.structure);
-        for (let i = 0; i < obj_array.length; ++i) {
-          loader.load("chair3.obj", function(geometry) {
-              geometry.children[0].position.set(obj_array[i].x, obj_array[i].y, 0);
-              scene.add(geometry.children[0]);
-          })
-        }
-        scene.add(structure);
-        var ambient = new THREE.AmbientLight(0xffffff, 0.4)
-        scene.add(ambient)
-        const pointLight1 = new THREE.PointLight(0xffffff, intensity=0.4);
-        pointLight1.position.set(0, 0, 20);
-        scene.add(pointLight1);
-        render();
-      });
-    }
-    
-
-
-
-
-
-// const mesh = new THREE.InstancedMesh( result.objs.base_obj[0], new THREE.MeshPhongMaterial({color: 0xffffff}), obj_array.length);
-
-
-
-
-      // const material = new THREE.MeshPhongMaterial({color: 0xff0000});
-      // console.log(transformAttr);
-      // console.log(base_objs[0]);
-      // base_objs[0].setAttribute('transform', transformAttr);
-      // const mesh = new THREE.InstancedMesh(base_objs[0], material, transforms.length);
-      // for ( let i = 0; i < transforms.length; i++ ) {
-      //   const transform = transforms[i];
-      //   const matrix = new THREE.Matrix4();
-      //   matrix.compose(transform.positions, transform.rotation, transform.scale);
-      //   mesh.setMatrixAt( i, matrix );
-      // }
-
-      // scene.add(mesh);
-
-
-
-
-
-      // for (let geometry of base_objs){
-      //   // geometry.computeVertexNormals();
-      //   var material = new THREE.MeshBasicMaterial({color: 0xffffff});
-      //   var mesh = new THREE.Mesh( geometry, material );
-      //   mesh.castShadow = true;
-      //   mesh.receiveShadow = true;
-      //   scene.add( mesh );
-      // }
-
-        // var material = new THREE.MeshBasicMaterial({color: 0xffffff});
-
-        // var mesh = new THREE.Mesh( base_objs[0], new THREE.MeshPhongMaterial({color: 0xffffff}));
-        // const obj_string = new THREE.OBJExporter().parse(mesh);
-        // console.log(obj_string);
-
-        // worker.postMessage(
-        //     {"blob": obj_string,
-        //      "percentage": 0.99,
-        //     }
-        // );
-
-
     worker.onmessage = function(e) {
       if (e.data.bin_data !== undefined) {
         const decoder = new TextDecoder('utf-8');
@@ -193,59 +61,141 @@
         m.material =  new THREE.MeshPhongMaterial({color: 0xffffff});
         m.geometry.computeVertexNormals();
         scene.add(m);
-        console.log(scene);
       }
     }
-  
 
-  // const dracoLoader = new THREE.DRACOLoader();
-  // dracoLoader.load('file.drc', function (geometry) {
-  //           geometry.computeVertexNormals();
-  //           var material = new THREE.MeshStandardMaterial( { vertexColors: THREE.VertexColors } );
-  //           var mesh = new THREE.Mesh( geometry, material );
-  //           // mesh.castShadow = true;
-  //           // mesh.receiveShadow = true;
-  //           console.log(mesh);
-  //           scene.add( mesh );
-  //         });
+    var ambient = new THREE.AmbientLight(0xffffff, 0.4)
+    scene.add(ambient)
+    const pointLight1 = new THREE.PointLight(0xffffff, intensity=0.4);
+    pointLight1.position.set(0, 0, 20);
+    scene.add(pointLight1);
 
-    // // 准备两个模型，一个简单，一个复杂
-    // var simpleGeometry = new THREE.BoxGeometry(1, 1, 1);
-    // var simpleMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    // var simpleMesh = new THREE.Mesh(simpleGeometry, simpleMaterial);
+    // load_no_instanced()
+    async function load_no_instanced() {
+      await reconstruction("5-2-16ch.bin").then(result => {
+        const obj_array = result.objs.obj;
+        const material = new THREE.MeshPhongMaterial({color: 0xff0000});
+        for (let z = 0; z < 1; ++z) {
+          for (let i = 0; i < obj_array.length; ++i) {
+            const obj_mesh = new THREE.Mesh(result.objs.base_obj[obj_array[i].index], material);
+            obj_mesh.position.set(obj_array[i].x, obj_array[i].y, z);
+            scene.add(obj_mesh);
+          }    
+        }      
+        for (let i = 0; i < 1; ++i) {
+          const structure = loader.parse(result.structure).children[0];
+          scene.add(structure);
+        }
+        console.log(scene)
+        render()
+      });
+    }
 
-    // var complexGeometry = new THREE.SphereGeometry(1, 32, 32);
-    // var complexMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    // var complexMesh = new THREE.Mesh(complexGeometry, complexMaterial);
+    let ninstanced = 1
+    load_instanced()
+    async function load_instanced() {
+      await reconstruction("5-2-16ch.bin").then(result => {
+        const obj_array = result.objs.obj;
+        const base_objs = result.objs.base_obj.map((geometry) => {
+          return new THREE.InstancedMesh(geometry, new THREE.MeshPhongMaterial({color: 0xff0000}), obj_array.length * ninstanced);
+        });
+        for (let i = 0; i < 1; ++i) {
+          const structure = loader.parse(result.structure).children[0];
+          scene.add(structure);
+        }
+        const getMatrix = function (o, h) {
+           const matrix = new THREE.Matrix4();
+           const position = new THREE.Vector3(o.x, o.y, h);
+           const rotation = new THREE.Euler(0, 0, -o.rotation * Math.PI / 180);
+           const quaternion = new THREE.Quaternion();
+           quaternion.setFromEuler( rotation );
+           const scale = new THREE.Vector3(1,1,1);
+           matrix.compose( position, quaternion, scale );
+           return matrix;
+         }
+         for ( let i = 0; i < obj_array.length; i++ ) {
+          for (let h = 0 ; h < ninstanced; ++h) {
+           const matrix = getMatrix(obj_array[i], h);
+           base_objs[obj_array[i].index].setMatrixAt( i * ninstanced + h , matrix );            
+          }
 
+         }
 
-    // // 使用LOD将两个模型组合在一起
-    // var lod = new THREE.LOD();
-    // // lod.addLevel(simpleMesh, 10);
-    // // lod.addLevel(complexMesh, 0);
-    // loader.load('chair3.obj', function (object) {
-    // // loader.load('untitled.obj', function (object) {
-    //   // object.children[0].geometry.computeVertexNormals();
-    //     // lod.addLevel(object, 0);
-    //     // render();
-    //     scene.add(object);
-    //   });
+         for (let i = 0; i < base_objs.length; ++i) {
+           scene.add(base_objs[i]);
+         }
+         console.log(scene);
+        render();
+      });
+    }
 
+        // load_no_batch()
+        async function load_no_batch() {
+      await reconstruction("5-2-16ch.bin", false).then(result => {
+        const obj_array = result.objs.obj;
+        const base_objs = result.objs.base_obj.map((geometry) => {
+          return new THREE.InstancedMesh(geometry, new THREE.MeshPhongMaterial({color: 0xff0000}), obj_array.length);
+        });
+        const structures = result.structure.split(";");
 
-    // scene.add(lod);
+        for(let i = 0; i < 5; ++i) {
+          structures.map((structure) => {
+            var curMesh = loader.parse(structure).children[0];
+            scene.add(curMesh);
+            var bh = new THREE.BoxHelper().setFromObject(curMesh);
+            bh.geometry.computeBoundingBox();
+            boxhelpers.push(bh);
+          })          
+        }
+        const getMatrix = function (o) {
+           const matrix = new THREE.Matrix4();
+           const position = new THREE.Vector3(o.x, o.y, 0);
+           const rotation = new THREE.Euler(0, 0, -o.rotation * Math.PI / 180);
+           const quaternion = new THREE.Quaternion();
+           quaternion.setFromEuler( rotation );
+           const scale = new THREE.Vector3(1,1,1);
+           matrix.compose( position, quaternion, scale );
+           return matrix;
+         }
+         for ( let i = 0; i < obj_array.length; i++ ) {
+           const matrix = getMatrix(obj_array[i]);
+           base_objs[obj_array[i].index].setMatrixAt( i, matrix );
+         }
+         for (let i = 0; i < base_objs.length; ++i) {
+           scene.add(base_objs[i]);
+         }
+         console.log(scene)
+        render();
+      });
+    }
 
-    // const color = 0xffffff
-    //     const intensity = 2
-    //     const light = new THREE.DirectionalLight(color, intensity)
-    //     light.castShadow = true // 投射阴影
-    //     light.position.set(30, 30, 30)
-    //     light.target.position.set(-4, 0, -4)
-    //     scene.add(light)
-    //     scene.add(light.target)
-
-
+    // controls.addEventListener('change', () => {requestAnimationFrame(render)});
     
-    // 渲染循环
+    var render = function() {
+      stats.begin();
+      controls.update();
+// const distance = camera.position.distanceTo(lod.position);
+      // 更新距离，并选择最合适的模型
+      // lod.update(camera);
+
+      // camera.updateMatrix();
+      // camera.updateMatrixWorld();
+      // projScreenMatrix = new THREE.Matrix4();
+      // projScreenMatrix.multiplyMatrices( camera.projectionMatrix, camera.matrixWorldInverse );
+      // frustum.setFromProjectionMatrix( projScreenMatrix );
+
+      // for(var i = 2; i < scene.children.length; i++){
+      //     if(frustum.intersectsBox(boxhelpers[i - 2].geometry.boundingBox) === true){
+      //         scene.children[i].visible = true;
+      //     }else{
+      //         scene.children[i].visible = false;
+      //     }
+      // }
+
+      requestAnimationFrame(render);
+      renderer.render(scene, camera);
+      stats.end();
+    };
   </script>
 </body>
 </html>

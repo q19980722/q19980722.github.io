@@ -529,7 +529,7 @@ function buildEdge(vertexs, offset) {
 }
   
 
-async function reconstruction(filename) {
+async function reconstruction(filename, batch=true) {
     try {
         // const response = await fetch('decode.json');
         // const data = await response.json();
@@ -549,32 +549,64 @@ async function reconstruction(filename) {
         let structure = "";
         let objs = {obj: [], base_obj: []};
         let obj_index = [];
-        for (let d of data['data']) {
-            if (d['type'] === 0) {
-                const m = new Wall(d, base_index, offset, normal_offset);
-                const [len_nodes, len_points, len_normal] = m.reconstruct();
-                structure += m.get();
-                base_index += len_nodes;
-                offset += len_points;
-                normal_offset += len_normal;
-            } else if (d['type'] === 1) {
-                const m = new Plain(d, base_index, offset, normal_offset);
-                const [len_nodes, len_points, len_normal] = m.reconstruct();
-                structure += m.get();
-                base_index += len_nodes;
-                offset += len_points;
-                normal_offset += len_normal;
-            } else if (d['type'] === 2) {
-                if (d['vertex_len']) {
-                    base_index += d['vertex_len'];
-                } else if (d['vertex']) {
-                    base_index += d['vertex'].length;
-                }
-            } else if (d['type'] === 3) {
-                objs.obj = d['vertex'];
-                obj_index = d['data'];
-            }
+        if (batch) {
+          for (let d of data['data']) {
+              if (d['type'] === 0) {
+                  const m = new Wall(d, base_index, offset, normal_offset);
+                  const [len_nodes, len_points, len_normal] = m.reconstruct();
+                  structure += m.get();
+                  base_index += len_nodes;
+                  offset += len_points;
+                  normal_offset += len_normal;
+              } else if (d['type'] === 1) {
+                  const m = new Plain(d, base_index, offset, normal_offset);
+                  const [len_nodes, len_points, len_normal] = m.reconstruct();
+                  structure += m.get();
+                  base_index += len_nodes;
+                  offset += len_points;
+                  normal_offset += len_normal;
+              } else if (d['type'] === 2) {
+                  if (d['vertex_len']) {
+                      base_index += d['vertex_len'];
+                  } else if (d['vertex']) {
+                      base_index += d['vertex'].length;
+                  }
+              } else if (d['type'] === 3) {
+                  objs.obj = d['vertex'];
+                  obj_index = d['data'];
+              }
+          }          
+        } else {
+          for (let d of data['data']) {
+              if (d['type'] === 0) {
+                  const m = new Wall(d, base_index, 0, 0);
+                  const [len_nodes, len_points, len_normal] = m.reconstruct();
+                  structure += m.get();
+                  structure += ";"
+                  base_index += len_nodes;
+                  offset += len_points;
+                  normal_offset += len_normal;
+              } else if (d['type'] === 1) {
+                  const m = new Plain(d, base_index, 0, 0);
+                  const [len_nodes, len_points, len_normal] = m.reconstruct();
+                  structure += m.get();
+                  structure += ";"
+                  base_index += len_nodes;
+                  offset += len_points;
+                  normal_offset += len_normal;
+              } else if (d['type'] === 2) {
+                  if (d['vertex_len']) {
+                      base_index += d['vertex_len'];
+                  } else if (d['vertex']) {
+                      base_index += d['vertex'].length;
+                  }
+              } else if (d['type'] === 3) {
+                  objs.obj = d['vertex'];
+                  obj_index = d['data'];
+              }
+          }
         }
+
         for (let i = 0; i < obj_index.length; i++) {
             const offset = obj_index[i].offset;
             const length = obj_index[i].length;
