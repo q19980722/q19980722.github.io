@@ -92,7 +92,7 @@
     }
 
     let ninstanced = 1
-    load_instanced()
+    // load_instanced()
     async function load_instanced() {
       await reconstruction("5-2-16ch.bin").then(result => {
         const obj_array = result.objs.obj;
@@ -129,7 +129,7 @@
       });
     }
 
-        // load_no_batch()
+        load_no_batch()
         async function load_no_batch() {
       await reconstruction("5-2-16ch.bin", false).then(result => {
         const obj_array = result.objs.obj;
@@ -138,7 +138,16 @@
         });
         const structures = result.structure.split(";");
 
-        for(let i = 0; i < 5; ++i) {
+        const material = new THREE.MeshPhongMaterial({color: 0xff0000});
+        for (let z = 0; z < 1; ++z) {
+          for (let i = 0; i < obj_array.length; ++i) {
+            const obj_mesh = new THREE.Mesh(result.objs.base_obj[obj_array[i].index], material);
+            obj_mesh.position.set(obj_array[i].x, obj_array[i].y, z);
+            scene.add(obj_mesh);
+          }    
+        }   
+
+        for(let i = 0; i < 1; ++i) {
           structures.map((structure) => {
             var curMesh = loader.parse(structure).children[0];
             scene.add(curMesh);
@@ -147,23 +156,23 @@
             boxhelpers.push(bh);
           })          
         }
-        const getMatrix = function (o) {
-           const matrix = new THREE.Matrix4();
-           const position = new THREE.Vector3(o.x, o.y, 0);
-           const rotation = new THREE.Euler(0, 0, -o.rotation * Math.PI / 180);
-           const quaternion = new THREE.Quaternion();
-           quaternion.setFromEuler( rotation );
-           const scale = new THREE.Vector3(1,1,1);
-           matrix.compose( position, quaternion, scale );
-           return matrix;
-         }
-         for ( let i = 0; i < obj_array.length; i++ ) {
-           const matrix = getMatrix(obj_array[i]);
-           base_objs[obj_array[i].index].setMatrixAt( i, matrix );
-         }
-         for (let i = 0; i < base_objs.length; ++i) {
-           scene.add(base_objs[i]);
-         }
+        // const getMatrix = function (o) {
+        //    const matrix = new THREE.Matrix4();
+        //    const position = new THREE.Vector3(o.x, o.y, 0);
+        //    const rotation = new THREE.Euler(0, 0, -o.rotation * Math.PI / 180);
+        //    const quaternion = new THREE.Quaternion();
+        //    quaternion.setFromEuler( rotation );
+        //    const scale = new THREE.Vector3(1,1,1);
+        //    matrix.compose( position, quaternion, scale );
+        //    return matrix;
+        //  }
+        //  for ( let i = 0; i < obj_array.length; i++ ) {
+        //    const matrix = getMatrix(obj_array[i]);
+        //    base_objs[obj_array[i].index].setMatrixAt( i, matrix );
+        //  }
+        //  for (let i = 0; i < base_objs.length; ++i) {
+        //    scene.add(base_objs[i]);
+        //  }
          console.log(scene)
         render();
       });
