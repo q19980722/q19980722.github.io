@@ -92,14 +92,14 @@
     }
 
     let ninstanced = 1
-    // load_instanced()
+    load_instanced()
     async function load_instanced() {
       await reconstruction("5-2-16ch.bin").then(result => {
         const obj_array = result.objs.obj;
         const base_objs = result.objs.base_obj.map((geometry) => {
           return new THREE.InstancedMesh(geometry, new THREE.MeshPhongMaterial({color: 0xff0000}), obj_array.length * ninstanced);
         });
-        for (let i = 0; i < 1; ++i) {
+        for (let i = 0; i < 10; ++i) {
           const structure = loader.parse(result.structure).children[0];
           scene.add(structure);
         }
@@ -129,7 +129,7 @@
       });
     }
 
-        load_no_batch()
+        // load_no_batch()
         async function load_no_batch() {
       await reconstruction("5-2-16ch.bin", false).then(result => {
         const obj_array = result.objs.obj;
