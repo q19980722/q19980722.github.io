@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -28,7 +28,7 @@
     // 初始化场景、相机和渲染器
     var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0,0,150);
+    camera.position.set(0,0,100);
 
     const loader = new THREE.OBJLoader();
     var renderer = new THREE.WebGLRenderer();
@@ -70,18 +70,21 @@
     pointLight1.position.set(0, 0, 20);
     scene.add(pointLight1);
 
-    // load_no_instanced()
+
+
+
+    load_no_instanced()
     async function load_no_instanced() {
       await reconstruction("5-2-16ch.bin").then(result => {
         const obj_array = result.objs.obj;
         const material = new THREE.MeshPhongMaterial({color: 0xff0000});
-        for (let z = 0; z < 1; ++z) {
-          for (let i = 0; i < obj_array.length; ++i) {
-            const obj_mesh = new THREE.Mesh(result.objs.base_obj[obj_array[i].index], material);
-            obj_mesh.position.set(obj_array[i].x, obj_array[i].y, z);
-            scene.add(obj_mesh);
-          }    
-        }      
+        // for (let z = 0; z < 1; ++z) {
+        //   for (let i = 0; i < obj_array.length; ++i) {
+        //     const obj_mesh = new THREE.Mesh(result.objs.base_obj[obj_array[i].index], material);
+        //     obj_mesh.position.set(obj_array[i].x, obj_array[i].y, z);
+        //     scene.add(obj_mesh);
+        //   }    
+        // }      
         for (let i = 0; i < 1; ++i) {
           const structure = loader.parse(result.structure).children[0];
           scene.add(structure);
@@ -92,14 +95,14 @@
     }
 
     let ninstanced = 1
-    load_instanced()
+    // load_instanced()
     async function load_instanced() {
       await reconstruction("5-2-16ch.bin").then(result => {
         const obj_array = result.objs.obj;
         const base_objs = result.objs.base_obj.map((geometry) => {
           return new THREE.InstancedMesh(geometry, new THREE.MeshPhongMaterial({color: 0xff0000}), obj_array.length * ninstanced);
         });
-        for (let i = 0; i < 10; ++i) {
+        for (let i = 0; i < 1; ++i) {
           const structure = loader.parse(result.structure).children[0];
           scene.add(structure);
         }
@@ -124,6 +127,15 @@
          for (let i = 0; i < base_objs.length; ++i) {
            scene.add(base_objs[i]);
          }
+
+         loader.load("simplify_SOFA.obj", function(mesh) {
+          console.log(mesh);
+          const m = mesh.children[0];
+          m.position.set(140,-20,0);
+            m.geometry.computeVertexNormals();
+            scene.add(m)
+         })
+
          console.log(scene);
         render();
       });
@@ -139,15 +151,15 @@
         const structures = result.structure.split(";");
 
         const material = new THREE.MeshPhongMaterial({color: 0xff0000});
-        for (let z = 0; z < 1; ++z) {
-          for (let i = 0; i < obj_array.length; ++i) {
-            const obj_mesh = new THREE.Mesh(result.objs.base_obj[obj_array[i].index], material);
-            obj_mesh.position.set(obj_array[i].x, obj_array[i].y, z);
-            scene.add(obj_mesh);
-          }    
-        }   
+        // for (let z = 0; z < 1; ++z) {
+        //   for (let i = 0; i < obj_array.length; ++i) {
+        //     const obj_mesh = new THREE.Mesh(result.objs.base_obj[obj_array[i].index], material);
+        //     obj_mesh.position.set(obj_array[i].x, obj_array[i].y, z);
+        //     scene.add(obj_mesh);
+        //   }    
+        // }   
 
-        for(let i = 0; i < 10; ++i) {
+        for(let i = 0; i < 1; ++i) {
           structures.map((structure) => {
             var curMesh = loader.parse(structure).children[0];
             scene.add(curMesh);
@@ -207,4 +219,156 @@
     };
   </script>
 </body>
+</html> -->
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Draw Calls Test</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+  <div id="Stats-output">
+  </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.117.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="stats.min.js"></script>
+    <script>
+        let scene, camera, renderer, mesh, instancedMesh, stats, controls;
+        let numObjects = 1000;
+        const numChange = 1000;
+        let useInstancedMesh = true;
+
+        init();
+        addControlButton();
+        addControlButtons();
+        animate();
+    console.log(scene);
+
+        function init() {
+          stats = new Stats();
+        document.body.appendChild(stats.dom);
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 30;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            createObjects();
+
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function createObjects() {
+            // Clear previous objects
+            scene = new THREE.Scene();
+
+            if (useInstancedMesh) {
+                // 使用 InstancedMesh 
+                let geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                let instanceMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                instancedMesh = new THREE.InstancedMesh(geometry, instanceMaterial, numObjects);
+                for (let i = 0; i < numObjects; i++) {
+                    const matrix = new THREE.Matrix4();
+                    matrix.setPosition(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5);
+                    instancedMesh.setMatrixAt(i, matrix);
+                }
+                scene.add(instancedMesh);
+            } else {
+                // 添加多个独立的 CubeMesh 到场景
+                let geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                let material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                for (let i = 0; i < numObjects; i++) {
+                    mesh = new THREE.Mesh(geometry, material);
+                    mesh.position.set(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5);
+                    scene.add(mesh);
+                }
+            }
+        }
+
+        function addControlButton() {
+            const btn = document.createElement('button');
+            btn.innerText = "Toggle InstancedMesh";
+            btn.style.position = 'absolute';
+            btn.style.top = '10px';
+            btn.style.left = '10px';
+            btn.onclick = function () {
+                useInstancedMesh = !useInstancedMesh;
+                createObjects();
+            }
+            document.body.appendChild(btn);
+        }
+
+        function addControlButtons() {
+    // Toggle InstancedMesh button (之前的代码)
+    const toggleBtn = document.createElement('button');
+    toggleBtn.innerText = "Toggle InstancedMesh";
+    toggleBtn.style.position = 'absolute';
+    toggleBtn.style.top = '10px';
+    toggleBtn.style.left = '10px';
+    toggleBtn.onclick = function() {
+        useInstancedMesh = !useInstancedMesh;
+        createObjects();
+    }
+    document.body.appendChild(toggleBtn);
+
+    // Increase cubes button
+    const addBtn = document.createElement('button');
+    addBtn.innerText = "+100 Cubes";
+    addBtn.style.position = 'absolute';
+    addBtn.style.top = '40px';
+    addBtn.style.left = '10px';
+    addBtn.onclick = function() {
+        numObjects += numChange;
+        createObjects();
+    }
+    document.body.appendChild(addBtn);
+
+    // Decrease cubes button
+    const subtractBtn = document.createElement('button');
+    subtractBtn.innerText = "-100 Cubes";
+    subtractBtn.style.position = 'absolute';
+    subtractBtn.style.top = '70px';
+    subtractBtn.style.left = '10px';
+    subtractBtn.onclick = function() {
+        numObjects = Math.max(numObjects - numChange, 0);
+        createObjects();
+    }
+    document.body.appendChild(subtractBtn);
+}
+
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+          stats.begin();
+
+renderer.render(scene, camera);
+console.log("Draw Calls:", renderer.info.render.calls);
+
+stats.end();
+requestAnimationFrame(animate);
+
+        }
+    </script>
+
+</body>
+
 </html>
