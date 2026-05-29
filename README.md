@@ -5,6 +5,7 @@ A static GitHub Pages contact page for Zifeng Wang.
 ## Files
 
 - `index.html`: The page markup and small copy-to-clipboard interaction.
+- `privacy.html`: The PinGo privacy policy page.
 - `styles.css`: The responsive visual design.
 - `.nojekyll`: Keeps GitHub Pages from applying Jekyll processing.
 

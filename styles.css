@@ -150,6 +150,20 @@ a {
   text-underline-offset: 5px;
 }
 
+.footer-link {
+  margin: 24px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.footer-link a,
+.text-link,
+.policy-copy a {
+  text-decoration-color: rgba(17, 17, 17, 0.28);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+
 .contact-panel {
   display: grid;
   gap: 22px;
@@ -177,6 +191,43 @@ a {
   color: var(--muted);
   font-size: 0.96rem;
   line-height: 1.55;
+}
+
+.policy-shell {
+  align-items: center;
+}
+
+.policy-panel {
+  width: 100%;
+}
+
+.policy-panel h1 {
+  margin: -8px 0 0;
+  font-size: clamp(2.2rem, 8vw, 4rem);
+  line-height: 1;
+}
+
+.policy-copy {
+  display: grid;
+  gap: 18px;
+}
+
+.policy-copy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.policy-copy p:first-child {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.text-link {
+  color: var(--ink);
+  font-size: 0.94rem;
+  font-weight: 700;
 }
 
 .toast {
