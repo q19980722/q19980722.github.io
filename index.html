@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Contact page for Zifeng Wang. Reach out by email at zifengwang722@gmail.com."
+    />
+    <meta name="theme-color" content="#f6f6f3" />
+    <title>Zifeng Wang | Contact</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page-shell" aria-label="Contact">
+      <section class="contact-stack">
+        <aside class="contact-panel" aria-label="Contact details">
+          <div>
+            <p class="panel-label">Preferred Channel</p>
+            <a class="panel-email" href="mailto:zifengwang722@gmail.com">
+              zifengwang722@gmail.com
+            </a>
+          </div>
+          <p class="panel-note">
+            I read every message and reply when there is a clear fit.
+          </p>
+        </aside>
+
+        <div class="actions" aria-label="Contact actions">
+          <a class="button button-primary" href="mailto:zifengwang722@gmail.com">
+            <span class="button-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path
+                  d="M5.75 5.5h12.5A1.75 1.75 0 0 1 20 7.25v9.5a1.75 1.75 0 0 1-1.75 1.75H5.75A1.75 1.75 0 0 1 4 16.75v-9.5A1.75 1.75 0 0 1 5.75 5.5Z"
+                />
+                <path
+                  d="m5.25 7 5.33 4.24a2.28 2.28 0 0 0 2.84 0L18.75 7"
+                />
+              </svg>
+            </span>
+            Email Me
+          </a>
+          <button class="button button-secondary" type="button" data-copy-email>
+            <span class="button-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path
+                  d="M8.5 4.75A2.25 2.25 0 0 1 10.75 2.5h6.5a2.25 2.25 0 0 1 2.25 2.25v6.5a2.25 2.25 0 0 1-2.25 2.25h-6.5a2.25 2.25 0 0 1-2.25-2.25v-6.5Z"
+                />
+                <path
+                  d="M15.5 15.25v2A2.25 2.25 0 0 1 13.25 19.5h-6.5a2.25 2.25 0 0 1-2.25-2.25v-6.5A2.25 2.25 0 0 1 6.75 8.5h2"
+                />
+              </svg>
+            </span>
+            Copy Email
+          </button>
+        </div>
+
+        <p class="email-line">
+          <span>Email</span>
+          <a href="mailto:zifengwang722@gmail.com">zifengwang722@gmail.com</a>
+        </p>
+      </section>
+    </main>
+
+    <div class="toast" role="status" aria-live="polite" aria-atomic="true">
+      Email copied
+    </div>
+
+    <script>
+      const email = "zifengwang722@gmail.com";
+      const button = document.querySelector("[data-copy-email]");
+      const toast = document.querySelector(".toast");
+
+      button.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(email);
+          toast.classList.add("is-visible");
+          window.setTimeout(() => toast.classList.remove("is-visible"), 1800);
+        } catch {
+          window.location.href = `mailto:${email}`;
+        }
+      });
+    </script>
+  </body>
+</html>
